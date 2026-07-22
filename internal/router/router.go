@@ -1,8 +1,13 @@
 package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/bibashjaprel/biexpense-api/internal/modules/accounts"
+	"github.com/jackc/pgx/v5/pgxpool"
 
-func Setup() *gin.Engine {
+	"github.com/gin-gonic/gin"
+)
+
+func Setup(db *pgxpool.Pool) *gin.Engine {
 	r := gin.Default()
 
 	r.GET("/health", func(c *gin.Context) {
@@ -12,14 +17,14 @@ func Setup() *gin.Engine {
 		})
 	})
 
+	accountRepository := accounts.NewRepository(db)
+	accountService := accounts.NewService(accountRepository)
+	accountHandler := accounts.NewHandler(accountService)
+
 	api := r.Group("/api/v1")
 
 	{
-		api.GET("/health", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"status": "ok",
-			})
-		})
+		api.GET("/accounts", accountHandler.GetAll)
 	}
 
 	return r
